@@ -1,0 +1,122 @@
+@import "tailwindcss";
+
+@theme inline {
+  /* Wolvio brand palette - Siemens Gamesa Demo Specs */
+  --color-wolvio-navy:   #0A2342;
+  --color-wolvio-orange: #F26B38;
+  --color-wolvio-green:  #10B981;
+  --color-wolvio-red:    #DC2626;
+  --color-wolvio-amber:  #F59E0B;
+  --color-wolvio-slate:  #4A5568;
+  --color-wolvio-off:    #F7F8FA;
+  --color-wolvio-mid:    #C5D0E0;
+  --color-wolvio-dark:   #061529;
+  --color-wolvio-surface: rgba(10, 35, 66, 0.6); /* Navy glass surface */
+
+  /* Typography Enforcement */
+  --font-heading: 'Montserrat', system-ui, sans-serif;
+  --font-sans: 'Montserrat', system-ui, sans-serif; /* Default to Montserrat for labels */
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Border radius */
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-3xl: 2rem;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--color-wolvio-dark);
+  color: var(--color-wolvio-light);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  overflow-y: scroll; /* Force scrollbar to prevent layout shift */
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Glassmorphism Utility */
+.glass {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-orange {
+  background: rgba(242, 102, 48, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(242, 102, 48, 0.2);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-wolvio-dark);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-wolvio-orange);
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+h1, h2, h3, h4, h5, h6, .font-heading {
+  font-family: var(--font-heading);
+  letter-spacing: -0.02em;
+}
+
+code, pre, .font-mono {
+  font-family: var(--font-mono);
+}
+
+.confidential-mode .font-mono,
+.confidential-mode [data-confidential] {
+  filter: blur(8px);
+  transition: filter 0.3s ease-in-out, opacity 0.3s ease-in-out;
+  position: relative;
+  user-select: none;
+  pointer-events: none;
+}
+
+.confidential-mode .font-mono::after,
+.confidential-mode [data-confidential]::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  background: rgba(242, 107, 56, 0.15);
+  border-radius: 4px;
+  backdrop-filter: blur(4px);
+  z-index: 10;
+}
+
+/* Base transition for non-confidential state */
+.font-mono, [data-confidential] {
+  transition: filter 0.3s ease-in-out;
+}
+
+/* Animations */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out forwards;
+}
+

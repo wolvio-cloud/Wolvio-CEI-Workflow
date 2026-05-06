@@ -1,0 +1,24 @@
+{
+  "invoice_id": "INV-002",
+  "contract_id": "C001",
+  "invoice_date": "2025-04-30",
+  "period_start": "2025-04-01",
+  "period_end": "2025-04-30",
+  "line_items": [
+    {
+      "item_id": "LI-1",
+      "description": "Base Fee (Missing Escalation)",
+      "category": "BaseFee",
+      "quantity": 1,
+      "unit": "Month",
+      "unit_rate": 12000000,
+      "amount": 12000000
+    }
+  ],
+  "subtotal": 12000000,
+  "gst_rate": 18,
+  "gst_amount": 2160000,
+  "total": 14160000,
+  "status": "Pending",
+  "note": "GAP: Missing WPI escalation. Correct: 12347520"
+}

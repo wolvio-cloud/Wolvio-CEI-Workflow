@@ -1,0 +1,35 @@
+{
+  "invoice_id": "INV-005",
+  "contract_id": "C001",
+  "invoice_date": "2025-06-30",
+  "period_start": "2025-06-01",
+  "period_end": "2025-06-30",
+  "line_items": [
+    {
+      "item_id": "LI-001",
+      "description": "Base O&M Monthly Fee (Jun 2025)",
+      "category": "BaseFee",
+      "quantity": 1,
+      "unit": "Month",
+      "unit_rate": 12347607,
+      "amount": 12347607
+    },
+    {
+      "item_id": "LI-002",
+      "description": "Performance Bonus (not claimed — 99.2% availability)",
+      "category": "Bonus",
+      "quantity": 0,
+      "unit": "PP",
+      "unit_rate": 0,
+      "amount": 0
+    }
+  ],
+  "subtotal": 12347607,
+  "gst_rate": 18,
+  "gst_amount": 2222569,
+  "total": 14570176,
+  "status": "Paid",
+  "engineered_gap": "BONUS_NOT_CLAIMED",
+  "expected_gap": 1728000,
+  "note": "OPPORTUNITY: Availability Jun 2025 = 99.2% vs bonus threshold 98%. Outperformance 1.2 PP. Unclaimed bonus = 1.2 × 1% × ₹14.4Cr = ₹17,28,000"
+}

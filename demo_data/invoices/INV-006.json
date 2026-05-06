@@ -1,0 +1,24 @@
+{
+  "invoice_id": "INV-006",
+  "contract_id": "C001",
+  "invoice_date": "2025-07-31",
+  "period_start": "2025-07-01",
+  "period_end": "2025-07-31",
+  "line_items": [
+    {
+      "item_id": "LI-001",
+      "description": "Base O&M Monthly Fee (Jul 2025 — escalated)",
+      "category": "BaseFee",
+      "quantity": 1,
+      "unit": "Month",
+      "unit_rate": 12347607,
+      "amount": 12347607
+    }
+  ],
+  "subtotal": 12347607,
+  "gst_rate": 18,
+  "gst_amount": 2222569,
+  "total": 14570176,
+  "status": "Pending",
+  "note": "CLEAN — escalated fee correctly applied"
+}

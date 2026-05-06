@@ -1,0 +1,35 @@
+{
+  "invoice_id": "INV-004",
+  "contract_id": "C001",
+  "invoice_date": "2025-05-31",
+  "period_start": "2025-05-01",
+  "period_end": "2025-05-31",
+  "line_items": [
+    {
+      "item_id": "LI-001",
+      "description": "Base O&M Monthly Fee (May 2025)",
+      "category": "BaseFee",
+      "quantity": 1,
+      "unit": "Month",
+      "unit_rate": 12347607,
+      "amount": 12347607
+    },
+    {
+      "item_id": "LI-002",
+      "description": "LD Deduction for April Availability Shortfall (not applied)",
+      "category": "LD",
+      "quantity": 0,
+      "unit": "PP",
+      "unit_rate": 0,
+      "amount": 0
+    }
+  ],
+  "subtotal": 12347607,
+  "gst_rate": 18,
+  "gst_amount": 2222569,
+  "total": 14570176,
+  "status": "Disputed",
+  "engineered_gap": "LD_NOT_NETTED",
+  "expected_gap": 1800000,
+  "note": "GAP: Availability Apr 2025 = 93.5% vs guarantee 96.0%. Shortfall 2.5 PP. LD = 2.5 × 0.5% × ₹14.4Cr = ₹18,00,000 should be deducted."
+}
