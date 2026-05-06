@@ -12,8 +12,8 @@ export async function GET() {
 
     const metrics = {
       contractsMonitored: contracts.length,
-      invoiceDraftsReady: contracts.reduce((s, c) => s + parseInt(c.drafts_ready), 0),
-      findingsPending: contracts.reduce((s, c) => s + parseInt(c.findings_pending), 0),
+      invoiceDraftsReady: contracts.reduce((s: number, c: any) => s + parseInt(c.drafts_ready), 0),
+      findingsPending: contracts.reduce((s: number, c: any) => s + parseInt(c.findings_pending), 0),
       ldExposure: (await sql`SELECT SUM(gap_amount) FROM findings WHERE status = 'pending'`)[0].sum || 0
     }
 

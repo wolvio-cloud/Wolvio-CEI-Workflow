@@ -2,9 +2,9 @@ import sql from '@/lib/db'
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const id = params.id
+  const { id } = await params
 
   try {
     const { field_name, value, comments } = await request.json()

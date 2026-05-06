@@ -27,8 +27,9 @@ async function getConfidenceData(invoiceId: string) {
   return { invoice, historical }
 }
 
-export default async function ConfidenceReportPage({ params }: { params: { invoice_id: string } }) {
-  const { invoice, historical } = await getConfidenceData(params.invoice_id)
+export default async function ConfidenceReportPage({ params }: { params: Promise<{ invoice_id: string }> }) {
+  const { invoice_id } = await params
+  const { invoice, historical } = await getConfidenceData(invoice_id)
   if (!invoice) return <div>Invoice not found</div>
 
   const months = [...historical, invoice]

@@ -1,6 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { createLogger } from '@/lib/logger'
 
+export const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+
 const logger = createLogger('claude-extraction')
 const MODELS = [
   'claude-sonnet-4-6',

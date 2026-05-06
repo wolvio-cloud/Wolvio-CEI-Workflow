@@ -2,9 +2,10 @@ import sql from '@/lib/db'
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const invoiceId = params.id
+  const { id } = await params
+  const invoiceId = id
 
   try {
     const invoice = (await sql`

@@ -10,9 +10,9 @@ const logger = createLogger('api/contracts/extract')
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const id = params.id
+  const { id } = await params
 
   try {
     // 1. Get contract from DB
@@ -41,7 +41,7 @@ export async function POST(
     const extractedData = JSON.parse(content)
 
     // 4. Update DB
-    await sql.begin(async (tx) => {
+    await sql.begin(async (tx: any) => {
       // Update main contract record
       await tx`
         UPDATE contracts SET 

@@ -9,7 +9,9 @@ import {
   ArrowRight,
   FileText,
   Clock,
-  ExternalLink
+  ExternalLink,
+  CheckCircle2,
+  CheckCircle
 } from 'lucide-react'
 import { formatINR } from '@/lib/utils'
 
@@ -21,8 +23,9 @@ async function getAuditLog(contractId: string) {
   `
 }
 
-export default async function AuditTrailPage({ params }: { params: { id: string } }) {
-  const auditLog = await getAuditLog(params.id)
+export default async function AuditTrailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const auditLog = await getAuditLog(id)
 
   return (
     <div className="flex min-h-screen bg-[#061529]">
@@ -113,14 +116,6 @@ function AuditItem({ log }: { log: any }) {
           Audit Reference: {log.id.substring(0, 8)} <ExternalLink className="w-2.5 h-2.5" />
         </div>
       </div>
-    </div>
-  )
-}
-
-function CheckCircle(props: any) {
-  return (
-    <div className="text-green-500">
-      <CheckCircle2 {...props} />
     </div>
   )
 }

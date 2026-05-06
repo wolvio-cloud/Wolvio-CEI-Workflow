@@ -25,17 +25,18 @@ async function getContractData(id: string) {
   return { contract, parameters }
 }
 
-export default async function ContractTwinPage({ params }: { params: { id: string } }) {
-  const data = await getContractData(params.id)
+export default async function ContractTwinPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const data = await getContractData(id)
   if (!data) return <div>Contract not found</div>
 
   const { contract, parameters } = data
 
-  const billingParams = parameters.filter(p => 
+  const billingParams = parameters.filter((p: any) => 
     ['base_monthly_fee', 'base_annual_fee', 'wpi_escalation', 'variable_rate', 'gst_treatment', 'payment_terms'].includes(p.field_name)
   )
   
-  const omParams = parameters.filter(p => 
+  const omParams = parameters.filter((p: any) => 
     ['availability_guarantee', 'availability_methodology', 'curtailment_exclusion', 'planned_maintenance_exclusion', 'ld_formula', 'bonus_formula'].includes(p.field_name)
   )
 
@@ -76,7 +77,7 @@ export default async function ContractTwinPage({ params }: { params: { id: strin
               Billing & Commercial Terms
             </h2>
             <div className="space-y-4">
-              {billingParams.map(p => (
+              {billingParams.map((p: any) => (
                 <ParameterCard key={p.id} param={p} />
               ))}
             </div>
@@ -88,7 +89,7 @@ export default async function ContractTwinPage({ params }: { params: { id: strin
               O&M & Availability Terms
             </h2>
             <div className="space-y-4">
-              {omParams.map(p => (
+              {omParams.map((p: any) => (
                 <ParameterCard key={p.id} param={p} />
               ))}
             </div>

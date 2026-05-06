@@ -2,9 +2,10 @@ import sql from '@/lib/db'
 
 export async function GET(
   request: Request,
-  { params }: { params: { contract_id: string } }
+  { params }: { params: Promise<{ contract_id: string }> }
 ) {
-  const contractId = params.contract_id
+  const { contract_id } = await params
+  const contractId = contract_id
 
   try {
     const auditLog = await sql`

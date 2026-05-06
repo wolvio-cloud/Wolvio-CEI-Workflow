@@ -26,12 +26,13 @@ async function getAvailabilityData(id: string) {
   return { contract, evidence, parameters }
 }
 
-export default async function AvailabilityPage({ params }: { params: { id: string } }) {
-  const { contract, evidence, parameters } = await getAvailabilityData(params.id)
+export default async function AvailabilityPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const { contract, evidence, parameters } = await getAvailabilityData(id)
   if (!contract) return <div>Contract not found</div>
 
-  const methodology = parameters.find(p => p.field_name === 'availability_methodology')
-  const ldFormula = parameters.find(p => p.field_name === 'ld_formula')
+  const methodology = parameters.find((p: any) => p.field_name === 'availability_methodology')
+  const ldFormula = parameters.find((p: any) => p.field_name === 'ld_formula')
 
   return (
     <div className="flex min-h-screen bg-[#061529]">

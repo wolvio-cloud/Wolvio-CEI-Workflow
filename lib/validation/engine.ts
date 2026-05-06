@@ -22,6 +22,17 @@ export interface InvoiceLineItems {
   total: number
 }
 
+export interface GenerationData {
+  total_kwh: number
+  availability_pct: number
+  period_start: string
+  period_end: string
+}
+
+export async function runValidation(params: any, inv: any, gen: any): Promise<any[]> {
+  return [] // Mock implementation for legacy code
+}
+
 /**
  * Function 1 — calculateWPIEscalation
  * Pure math for WPI escalation based on contractual rules.

@@ -21,8 +21,9 @@ async function getFindings(contractId: string) {
   `
 }
 
-export default async function ApprovalPage({ params }: { params: { id: string } }) {
-  const findings = await getFindings(params.id)
+export default async function ApprovalPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const findings = await getFindings(id)
   
   return (
     <div className="flex min-h-screen bg-[#061529]">

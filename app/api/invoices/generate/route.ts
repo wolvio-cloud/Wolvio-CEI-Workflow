@@ -5,7 +5,7 @@ import {
   calculateInvoiceTotal, 
   calculateTrendVariance 
 } from '@/lib/validation/engine'
-import { anthropic } from '@/lib/extraction/claude'
+import { anthropic, callClaude } from '@/lib/extraction/claude'
 import { INVOICE_CONFIDENCE_PROMPT } from '@/lib/extraction/contract-prompt'
 
 export async function POST(request: Request) {
@@ -26,7 +26,7 @@ export async function POST(request: Request) {
       baseMonthlyFee: params.base_monthly_fee.value,
       wpiBaseYear: params.wpi_escalation.value.base_year,
       wpiCurrentYear: new Date(period_start).getFullYear(),
-      wpiData: wpiData.map(d => ({ year: d.year, value: parseFloat(d.value) })),
+      wpiData: wpiData.map((d: any) => ({ year: d.year, value: parseFloat(d.value) })),
       capPct: params.wpi_escalation.value.cap_pct,
       floorPct: params.wpi_escalation.value.floor_pct
     })
@@ -72,23 +72,14 @@ export async function POST(request: Request) {
       })
     }
 
-    // 5. Claude for confidence explanation
-    const claudeResp = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
-      max_tokens: 500,
-      system: INVOICE_CONFIDENCE_PROMPT,
-      messages: [{ 
-        role: 'user', 
-        content: `Explain confidence for this invoice draft:\n${JSON.stringify({
-          period: `${period_start} to ${period_end}`,
-          wpi: wpiResult,
-          variable: varResult,
-          variance: varianceReport
-        })}` 
-      }]
+    // 4. Claude for confidence/variance summary
+    const confidenceExplanation = await callClaude({
+      systemPrompt: INVOICE_CONFIDENCE_PROMPT,
+      userMessage: `Analyze variance for ${period_start}:\n${JSON.stringify({
+        current: { wpi: wpiResult, variable: varResult, variance: varianceReport },
+        historical: lastInv
+      })}`
     })
-
-    const confidenceExplanation = (claudeResp.content[0] as any).text
 
     // 6. Save Draft
     const [invoice] = await sql`

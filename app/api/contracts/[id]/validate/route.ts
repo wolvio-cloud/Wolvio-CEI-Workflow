@@ -53,7 +53,7 @@ export async function POST(
     const rawChecks = await runValidation(params, inv, generation)
 
     const checks = await Promise.all(
-      rawChecks.map(async (check) => {
+      rawChecks.map(async (check: any) => {
         if (check.verdict === 'MATCH') return { ...check, explanation: 'All amounts match contract terms.' }
         if (check.verdict === 'INSUFFICIENT_DATA') return { ...check, explanation: 'Insufficient data to validate.' }
         try {
@@ -79,10 +79,10 @@ export async function POST(
       })
     )
 
-    const totalGap = checks.reduce((s, c) => s + (c.gap_amount ?? 0), 0)
-    const totalOpportunity = checks.reduce((s, c) => s + (c.opportunity_amount ?? 0), 0)
-    const hasGaps = checks.some((c) => c.verdict === 'GAP')
-    const hasOpportunities = checks.some((c) => c.verdict === 'OPPORTUNITY')
+    const totalGap = checks.reduce((s: number, c: any) => s + (c.gap_amount ?? 0), 0)
+    const totalOpportunity = checks.reduce((s: number, c: any) => s + (c.opportunity_amount ?? 0), 0)
+    const hasGaps = checks.some((c: any) => c.verdict === 'GAP')
+    const hasOpportunities = checks.some((c: any) => c.verdict === 'OPPORTUNITY')
 
     const result = ValidationResultSchema.parse({
       contract_id: id,

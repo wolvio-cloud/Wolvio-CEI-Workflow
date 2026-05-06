@@ -23,8 +23,8 @@ async function getDashboardData() {
 
   const metrics = {
     contractsMonitored: contracts.length,
-    invoiceDraftsReady: contracts.reduce((s, c) => s + parseInt(c.drafts_ready), 0),
-    findingsPending: contracts.reduce((s, c) => s + parseInt(c.findings_pending), 0),
+    invoiceDraftsReady: contracts.reduce((s: number, c: any) => s + parseInt(c.drafts_ready), 0),
+    findingsPending: contracts.reduce((s: number, c: any) => s + parseInt(c.findings_pending), 0),
     ldExposure: (await sql`SELECT SUM(gap_amount) FROM findings WHERE status = 'pending'`)[0].sum || 0
   }
 
@@ -91,7 +91,7 @@ export default async function DashboardPage() {
           </div>
 
           <div className="grid grid-cols-1 gap-4">
-            {contracts.map((contract) => (
+            {contracts.map((contract: any) => (
               <Link 
                 key={contract.id}
                 href={`/contracts/${contract.id}`}

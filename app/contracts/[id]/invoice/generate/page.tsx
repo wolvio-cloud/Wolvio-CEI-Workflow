@@ -20,8 +20,9 @@ async function getContractAndEvidence(id: string) {
   return { contract, evidence }
 }
 
-export default async function InvoiceGeneratePage({ params }: { params: { id: string } }) {
-  const { contract, evidence } = await getContractAndEvidence(params.id)
+export default async function InvoiceGeneratePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const { contract, evidence } = await getContractAndEvidence(id)
   if (!contract) return <div>Contract not found</div>
 
   const p = contract.parameters

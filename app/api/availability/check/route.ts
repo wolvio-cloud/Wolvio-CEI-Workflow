@@ -1,6 +1,6 @@
 import sql from '@/lib/db'
 import { calculateContractualAvailability } from '@/lib/validation/engine'
-import { anthropic } from '@/lib/extraction/claude'
+import { anthropic, callClaude } from '@/lib/extraction/claude'
 
 export async function POST(request: Request) {
   try {
@@ -26,21 +26,14 @@ export async function POST(request: Request) {
     })
 
     // 3. Claude for finding explanation
-    const claudeResp = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
-      max_tokens: 500,
-      system: "You are an Operations Manager. Explain an availability finding based on SCADA and SLDC data.",
-      messages: [{ 
-        role: 'user', 
-        content: `Explain this finding:\n${JSON.stringify({
-          period: `${period_start} to ${period_end}`,
-          result,
-          methodology: params.availability_methodology.source_text
-        })}` 
-      }]
+    const opsExplanation = await callClaude({
+      systemPrompt: "You are an Operations Manager. Explain an availability finding based on SCADA and SLDC data.",
+      userMessage: `Explain this finding:\n${JSON.stringify({
+        period: `${period_start} to ${period_end}`,
+        result,
+        methodology: params.availability_methodology.source_text
+      })}`
     })
-
-    const opsExplanation = (claudeResp.content[0] as any).text
 
     // 4. Create Finding
     const [finding] = await sql`
