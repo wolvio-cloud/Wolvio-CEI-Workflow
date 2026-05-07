@@ -1,5 +1,6 @@
+'use client'
+
 import { Sidebar } from '@/components/Sidebar'
-import sql from '@/lib/db'
 import { 
   Activity, 
   ShieldCheck, 
@@ -7,162 +8,122 @@ import {
   ChevronRight,
   Zap,
   AlertTriangle,
-  CheckCircle2
+  CheckCircle2,
+  FileText,
+  History,
+  Clock
 } from 'lucide-react'
 import { formatINR } from '@/lib/utils'
+import { useState, useEffect } from 'react'
 
-async function getAvailabilityData(id: string) {
-  const contract = (await sql`SELECT * FROM contracts WHERE id = ${id}`)[0]
-  const evidence = (await sql`
-    SELECT * FROM evidence_files 
-    WHERE contract_id = ${id} AND period_start = '2025-04-01'
-  `)[0]
-  
-  const parameters = await sql`
-    SELECT * FROM contract_parameters 
-    WHERE contract_id = ${id}
-  `
-  
-  return { contract, evidence, parameters }
-}
+export default function AvailabilityPage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
+  const [data, setData] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
 
-export default async function AvailabilityPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
-  const { contract, evidence, parameters } = await getAvailabilityData(id)
-  if (!contract) return <div>Contract not found</div>
+  useEffect(() => {
+    paramsPromise.then(p => {
+      fetch(`/api/contracts/${p.id}/parameters`).then(res => res.json()).then(contractData => {
+        // Mocking the evidence data for the demo
+        const mockEvidence = {
+          finalLd: 2520000,
+          contractualAvailabilityPct: 92.5,
+          shortfall: 3.5,
+          guaranteePct: 96.0,
+          exclusionsApplied: [
+            { type: 'Grid Curtailment (SLDC/POSOCO)', hours: 87.4 },
+            { type: 'Planned Maintenance (Annual)', hours: 18.0 }
+          ]
+        }
+        setData({ contract: contractData, evidence: mockEvidence, parameters: contractData.parameters })
+        setLoading(false)
+      })
+    })
+  }, [paramsPromise])
 
-  const methodology = parameters.find((p: any) => p.field_name === 'availability_methodology')
-  const ldFormula = parameters.find((p: any) => p.field_name === 'ld_formula')
+  if (loading) return <div className="min-h-screen bg-[#061529] flex items-center justify-center text-white">Loading...</div>
+
+  const { evidence, parameters } = data
+  const methodology = Object.values(parameters).find((p: any) => p.field_name === 'availability_methodology') as any
 
   return (
     <div className="flex min-h-screen bg-[#061529]">
       <Sidebar />
       
-      <main className="flex-1 p-10 space-y-10">
+      <main className="flex-1 p-10 space-y-10 overflow-y-auto">
         <header className="flex justify-between items-end">
           <div>
             <div className="flex items-center gap-2 text-orange-500 font-bold uppercase tracking-widest text-xs mb-2">
               <Activity className="w-4 h-4" /> Operational Intelligence
             </div>
-            <h1 className="text-4xl font-bold text-white tracking-tight">Availability & LD Evidence</h1>
-            <p className="text-slate-400">Reviewing April 2025 performance against Clause 7.1</p>
+            <h1 className="text-4xl font-bold text-white tracking-tight">Availability & LD Audit</h1>
+            <p className="text-slate-400 font-medium">Reviewing Wind Farm Alpha Performance (April 2025)</p>
           </div>
           
-          <div className="px-6 py-3 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center gap-3">
-            <AlertTriangle className="text-red-500 w-5 h-5" />
+          <div className="px-6 py-4 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center gap-4">
+            <AlertTriangle className="text-red-500 w-6 h-6" />
             <div>
-              <p className="text-[10px] text-red-500 font-black uppercase">Current Exposure</p>
-              <p className="text-lg font-bold text-white">{formatINR(2520000)}</p>
+              <p className="text-[10px] text-red-500 font-black uppercase tracking-widest">Vayona Exposure</p>
+              <p className="text-2xl font-black text-white tracking-tighter">{formatINR(evidence.finalLd)}</p>
             </div>
           </div>
         </header>
 
-        {/* METHODOLOGY BOX */}
-        <section className="p-8 rounded-3xl bg-orange-600/5 border border-orange-500/20 space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-sm font-black text-orange-500 uppercase tracking-widest flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4" /> Contractual Methodology (Clause 7.1)
-            </h2>
-            <span className="px-3 py-1 rounded bg-orange-600 text-white text-[10px] font-bold">PAGE 22</span>
-          </div>
-          <blockquote className="text-lg text-white font-medium leading-relaxed italic">
-            "{methodology?.source_text}"
-          </blockquote>
-        </section>
+        {/* TOP KPI STRIP */}
+        <div className="grid grid-cols-4 gap-6">
+          <KPICard label="Raw Availability" value="91.9%" sub="SCADA Baseline" />
+          <KPICard label="SLDC Exclusions" value="87.4 hrs" sub="Verified Cert" color="orange" />
+          <KPICard label="Contractual Availability" value="92.5%" sub="Vayona Threshold: 96%" highlight />
+          <KPICard label="Audit Status" value="LD FOUND" sub="Clause 7.1 Violation" color="red" />
+        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-          {/* CALCULATION CASCADE */}
-          <div className="lg:col-span-2 space-y-6">
-            <h3 className="text-sm font-black text-slate-500 uppercase tracking-widest">Calculation Cascade</h3>
-            
-            <div className="space-y-4">
-              <CascadeItem label="Total Period Hours" value="720.00" sub="Apr 01 – Apr 30" />
-              <CascadeItem 
-                label="Grid Curtailment (SLDC/POSOCO)" 
-                value="- 87.40" 
-                sub="Clause 7.3 Exclusions" 
-                color="orange"
-              />
-              <CascadeItem 
-                label="Planned Maintenance" 
-                value="- 18.00" 
-                sub="Clause 7.4 Exclusions" 
-                color="orange"
-              />
-              <div className="h-px bg-white/10 my-2" />
-              <CascadeItem label="Adjusted Contract Hours" value="614.60" sub="Denominator" bold />
-              
-              <CascadeItem 
-                label="Raw Unavailable Hours" 
-                value="58.32" 
-                sub="SCADA Fault Logs" 
-              />
-              <CascadeItem 
-                label="Overlap (Fault during Curtailment)" 
-                value="- 12.00" 
-                sub="Removed per Clause 7.3" 
-                color="orange"
-              />
-              <div className="h-px bg-white/10 my-2" />
-              <CascadeItem label="Net Unavailable Hours" value="46.32" sub="Numerator Subtrahend" bold />
-              
-              <div className="p-8 rounded-3xl bg-white/[0.03] border border-white/10 flex justify-between items-center">
-                <div>
-                  <p className="text-xs text-slate-500 font-bold uppercase mb-1">Contractual Availability</p>
-                  <p className="text-5xl font-black text-white tracking-tighter">92.5%</p>
-                </div>
-                <div className="text-right space-y-2">
-                  <div className="flex items-center gap-2 justify-end">
-                    <span className="text-slate-400 text-sm">Guaranteed:</span>
-                    <span className="text-white font-bold">96.0%</span>
-                  </div>
-                  <div className="flex items-center gap-2 justify-end">
-                    <span className="text-red-500 text-sm font-bold">Shortfall:</span>
-                    <span className="text-red-500 font-black text-xl">3.5%</span>
-                  </div>
-                </div>
+        <div className="grid grid-cols-3 gap-10">
+          <div className="col-span-2 space-y-10">
+            {/* METHODOLOGY SECTION */}
+            <section className="p-8 rounded-3xl bg-white/[0.03] border border-white/10 space-y-6">
+              <div className="flex justify-between items-center">
+                <h3 className="text-white font-bold flex items-center gap-2 text-lg">
+                  <ShieldCheck className="w-5 h-5 text-orange-500" />
+                  Calculation Traceability
+                </h3>
+                <span className="px-3 py-1 rounded-full bg-orange-500/10 text-orange-500 text-[10px] font-black uppercase tracking-widest border border-orange-500/20">
+                  {methodology?.clause_reference || 'Clause 7.1'}
+                </span>
               </div>
-            </div>
+              <div className="p-6 rounded-2xl bg-black/40 border border-white/5 font-medium text-slate-300 leading-relaxed italic text-sm">
+                "{methodology?.source_text || "Availability shall be calculated after adjusting for SLDC curtailment and grid unavailability beyond 50 hours per year."}"
+              </div>
+            </section>
+
+            {/* AUDIT CASCADE */}
+            <section className="space-y-6">
+              <h3 className="text-sm font-black text-slate-500 uppercase tracking-widest">Operational Audit Cascade</h3>
+              <div className="space-y-4">
+                <AuditItem label="Gross Period Hours" value="720.00" sub="Apr 01 - Apr 30" />
+                <AuditItem label="Grid Curtailment (SLDC)" value="- 87.40" sub="Exclusion Certificate #RAJ-2025-04" color="orange" />
+                <AuditItem label="Planned Maintenance" value="- 18.00" sub="Annual Quota Utilization" color="orange" />
+                <div className="h-px bg-white/10 my-2" />
+                <AuditItem label="Adjusted Contract Hours" value="614.60" sub="Audited Denominator" bold />
+              </div>
+            </section>
           </div>
 
-          {/* EVIDENCE SIDEBAR */}
-          <aside className="space-y-6">
-            <h3 className="text-sm font-black text-slate-500 uppercase tracking-widest">Evidence Sources</h3>
-            
-            <SourceCard 
-              name="SCADA Raw Data" 
-              status="Verified" 
-              timestamp="May 01, 10:15 AM"
-              file="SG_WFA_Apr25_SCADA.csv"
-            />
-            <SourceCard 
-              name="SLDC Curtailment Log" 
-              status="Verified" 
-              timestamp="May 02, 09:00 AM"
-              file="RAJ_SLDC_Apr25_Orders.pdf"
-            />
-            <SourceCard 
-              name="Maintenance Notice" 
-              status="Verified" 
-              timestamp="Apr 15, 02:30 PM"
-              file="PM_Notice_72hr.pdf"
-            />
-
-            <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 space-y-4">
-              <h4 className="text-xs font-black text-white uppercase">LD Calculation</h4>
+          <aside className="space-y-8">
+            <div className="p-8 rounded-3xl bg-gradient-to-br from-orange-600 to-orange-800 space-y-6 shadow-2xl shadow-orange-900/40">
               <div className="space-y-2">
-                <div className="flex justify-between text-xs">
-                  <span className="text-slate-400">Rate per PP</span>
-                  <span className="text-white font-mono">0.5% Annual Fee</span>
-                </div>
-                <div className="flex justify-between text-xs text-red-500 font-bold">
-                  <span className="">Exposure</span>
-                  <span className="font-mono">{formatINR(2520000)}</span>
-                </div>
+                <p className="text-[10px] text-white/60 font-black uppercase tracking-widest">Financial Impact</p>
+                <h2 className="text-4xl font-black text-white tracking-tighter">{formatINR(evidence.finalLd)}</h2>
+                <p className="text-sm text-white/80 font-medium italic">Shortfall against 96% guarantee</p>
               </div>
-              <button className="w-full py-3 rounded-xl bg-orange-600 text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-orange-900/20">
-                Route Finding to Ops
+              <button className="w-full py-4 bg-white text-orange-700 font-black text-xs uppercase tracking-widest rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all">
+                Issue LD Recovery Notice
               </button>
+            </div>
+
+            <div className="space-y-4">
+              <h4 className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Evidence Files</h4>
+              <EvidenceFile name="SCADA_Apr25_WFA.csv" size="4.2 MB" />
+              <EvidenceFile name="SLDC_Exclusion_Cert.pdf" size="1.1 MB" />
+              <EvidenceFile name="Maintenance_Log_72.pdf" size="890 KB" />
             </div>
           </aside>
         </div>
@@ -171,12 +132,26 @@ export default async function AvailabilityPage({ params }: { params: Promise<{ i
   )
 }
 
-function CascadeItem({ label, value, sub, color, bold }: any) {
+function KPICard({ label, value, sub, color, highlight }: any) {
+  return (
+    <div className={`p-6 rounded-2xl border ${
+      highlight ? 'bg-orange-600/10 border-orange-500/30' : 'bg-white/[0.03] border-white/10'
+    }`}>
+      <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-2">{label}</p>
+      <p className={`text-2xl font-black mb-1 ${
+        color === 'red' ? 'text-red-500' : color === 'orange' ? 'text-orange-500' : 'text-white'
+      }`}>{value}</p>
+      <p className="text-[10px] text-slate-500 font-medium">{sub}</p>
+    </div>
+  )
+}
+
+function AuditItem({ label, value, sub, color, bold }: any) {
   return (
     <div className="flex justify-between items-center group">
       <div className="space-y-0.5">
         <p className={`text-sm font-bold ${bold ? 'text-white' : 'text-slate-300'}`}>{label}</p>
-        <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">{sub}</p>
+        <p className="text-[10px] text-slate-500 font-medium uppercase tracking-widest">{sub}</p>
       </div>
       <span className={`text-lg font-mono ${
         color === 'orange' ? 'text-orange-500' : 
@@ -188,22 +163,17 @@ function CascadeItem({ label, value, sub, color, bold }: any) {
   )
 }
 
-function SourceCard({ name, status, timestamp, file }: any) {
+function EvidenceFile({ name, size }: any) {
   return (
-    <div className="p-5 rounded-2xl bg-white/[0.03] border border-white/10 space-y-3">
-      <div className="flex justify-between items-start">
-        <div className="space-y-1">
-          <h4 className="text-sm font-bold text-white">{name}</h4>
-          <p className="text-[10px] text-slate-500">{timestamp}</p>
-        </div>
-        <span className="px-2 py-0.5 rounded bg-green-500/10 text-green-500 text-[8px] font-black uppercase">
-          {status}
-        </span>
+    <div className="flex items-center gap-3 p-4 rounded-2xl bg-white/[0.03] border border-white/5 hover:bg-white/[0.05] transition-all cursor-pointer group">
+      <div className="w-10 h-10 rounded-xl bg-black/20 flex items-center justify-center">
+        <FileText className="w-5 h-5 text-slate-500 group-hover:text-orange-500 transition-colors" />
       </div>
-      <div className="flex items-center gap-2 p-2 rounded-lg bg-black/20 border border-white/5 text-[10px] text-slate-400 truncate">
-        <ShieldCheck className="w-3 h-3 text-orange-500 shrink-0" />
-        {file}
+      <div className="flex-1">
+        <p className="text-xs font-bold text-slate-300 group-hover:text-white transition-colors">{name}</p>
+        <p className="text-[10px] text-slate-500 font-medium uppercase">{size}</p>
       </div>
+      <ChevronRight className="w-4 h-4 text-slate-600" />
     </div>
   )
 }

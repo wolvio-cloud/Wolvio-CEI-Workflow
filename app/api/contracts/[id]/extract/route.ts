@@ -2,7 +2,7 @@ import { join } from 'path'
 import { readFile } from 'fs/promises'
 import sql from '@/lib/db'
 import { parsePDF } from '@/lib/pdf/parse'
-import { anthropic } from '@/lib/extraction/claude'
+import { anthropic, callClaude } from '@/lib/extraction/claude'
 import { CONTRACT_EXTRACTION_SYSTEM_PROMPT } from '@/lib/extraction/contract-prompt'
 import { createLogger } from '@/lib/logger'
 
@@ -29,15 +29,12 @@ export async function POST(
 
     if (!text) return Response.json({ error: 'No text found in contract' }, { status: 422 })
 
-    // 3. Call Claude API
-    const response = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
-      max_tokens: 4000,
-      system: CONTRACT_EXTRACTION_SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: `Extract parameters from this contract text:\n\n${text.substring(0, 50000)}` }]
+    // 3. Call Claude API with fallback logic
+    const content = await callClaude({
+      systemPrompt: CONTRACT_EXTRACTION_SYSTEM_PROMPT,
+      userMessage: `Extract parameters from this contract text:\n\n${text.substring(0, 50000)}`
     })
 
-    const content = (response.content[0] as any).text
     const extractedData = JSON.parse(content)
 
     // 4. Update DB
