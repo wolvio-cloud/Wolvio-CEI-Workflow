@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { formatINR } from '@/lib/utils'
+import { UploadContractButton } from '@/components/UploadContractButton'
 
 async function getDashboardData() {
   const contracts = await sql`
@@ -45,9 +46,7 @@ export default async function DashboardPage() {
             <p className="text-slate-400">Monitoring {metrics.contractsMonitored} high-value LTSA agreements</p>
           </div>
           <div className="flex gap-4">
-            <button className="px-6 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-semibold transition-all shadow-lg shadow-orange-900/20">
-              Upload New Contract
-            </button>
+            <UploadContractButton />
           </div>
         </header>
 

@@ -12,6 +12,8 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { formatINR } from '@/lib/utils'
+import { ParameterOverrideActions } from '@/components/ParameterOverrideActions'
+import { GenerateInvoiceButton } from '@/components/GenerateInvoiceButton'
 
 async function getContractData(id: string) {
   const contract = (await sql`SELECT * FROM contracts WHERE id = ${id}`)[0]
@@ -64,9 +66,7 @@ export default async function ContractTwinPage({ params }: { params: Promise<{ i
               <p className="text-xs text-slate-500 uppercase font-black">Extraction Quality</p>
               <p className="text-xl font-bold text-green-500">{contract.extraction_quality_score}%</p>
             </div>
-            <button className="px-6 py-3 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold transition-all shadow-lg shadow-orange-900/20 flex items-center gap-2">
-              <FileText className="w-5 h-5" /> Generate April Invoice
-            </button>
+            <GenerateInvoiceButton contractId={id} />
           </div>
         </header>
 
@@ -123,14 +123,19 @@ function ParameterCard({ param }: { param: any }) {
           </div>
         </div>
         
-        <button className="p-2 rounded-lg bg-white/5 hover:bg-orange-600/20 text-slate-500 hover:text-orange-500 transition-all opacity-0 group-hover:opacity-100">
-          <Edit3 className="w-4 h-4" />
-        </button>
+        <ParameterOverrideActions 
+          contractId={param.contract_id} 
+          fieldName={param.field_name} 
+          currentValue={param.value} 
+        />
       </div>
 
-      {param.confidence === 'low' && (
-        <div className="mt-3 flex items-center gap-2 text-[10px] text-amber-500 font-bold uppercase">
-          <AlertTriangle className="w-3 h-3" /> Manual Verification Required
+      {(param.confidence === 'low' || param.is_manual_override) && (
+        <div className={`mt-3 flex items-center gap-2 text-[10px] font-bold uppercase ${
+          param.is_manual_override ? 'text-blue-500' : 'text-amber-500'
+        }`}>
+          <AlertTriangle className="w-3 h-3" /> 
+          {param.is_manual_override ? 'Manual Override Active' : 'Manual Verification Required'}
         </div>
       )}
     </div>

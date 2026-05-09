@@ -9,6 +9,8 @@ import {
   ArrowRight
 } from 'lucide-react'
 import { formatINR } from '@/lib/utils'
+import { InvoiceActions } from '@/components/InvoiceActions'
+import { PostingStatus } from '@/components/PostingStatus'
 
 async function getConfidenceData(invoiceId: string) {
   const invoice = (await sql`
@@ -80,9 +82,15 @@ export default async function ConfidenceReportPage({ params }: { params: Promise
             <p className="text-sm text-orange-100/80 leading-relaxed">
               This invoice is verified against the digital twin of the contract. You can proceed with SAP posting.
             </p>
-            <button className="w-full py-4 rounded-xl bg-white text-orange-600 font-black text-lg transition-transform hover:scale-105 active:scale-95 shadow-xl">
-              Post to SAP S/4HANA
-            </button>
+            <InvoiceActions invoiceId={invoice.id} />
+            <a 
+              href={`/api/invoices/${invoice.id}/approval-packet`}
+              className="block w-full py-3 rounded-xl bg-orange-700/30 text-white font-bold text-sm text-center border border-white/10 hover:bg-orange-700/50 transition-all mt-4 mb-4"
+              download
+            >
+              Download Approval Packet
+            </a>
+            <PostingStatus invoiceId={invoice.id} currentStatus={invoice.status} />
           </div>
         </div>
 

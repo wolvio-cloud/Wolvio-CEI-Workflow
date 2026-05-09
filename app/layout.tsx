@@ -13,16 +13,20 @@ export const metadata: Metadata = {
   description: 'Billing validation powered by AI',
 }
 
+import { RoleProvider } from '@/components/RoleProvider'
+
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   await ensureSeeded()
   return (
     <html lang="en" className={`${montserrat.variable} ${jetbrainsMono.variable} antialiased font-sans`}>
       <body className="bg-[--color-wolvio-dark] text-white font-sans">
-        <ConfidentialBanner />
-        <main className="w-full relative overflow-visible">
-          {children}
-        </main>
-        <DemoControlPanel />
+        <RoleProvider>
+          <ConfidentialBanner />
+          <main className="w-full relative overflow-visible">
+            {children}
+          </main>
+          <DemoControlPanel />
+        </RoleProvider>
       </body>
     </html>
   )

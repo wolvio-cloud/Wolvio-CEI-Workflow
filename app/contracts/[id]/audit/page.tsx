@@ -11,7 +11,8 @@ import {
   Clock,
   ExternalLink,
   CheckCircle2,
-  CheckCircle
+  CheckCircle,
+  AlertCircle
 } from 'lucide-react'
 import { formatINR } from '@/lib/utils'
 
@@ -57,10 +58,19 @@ export default async function AuditTrailPage({ params }: { params: Promise<{ id:
 function AuditItem({ log }: { log: any }) {
   const iconMap: any = {
     INVOICE_GENERATED: Calculator,
-    INVOICE_APPROVED: CheckCircle,
+    INVOICE_APPROVED: CheckCircle2,
     PARAMETER_OVERRIDE: ShieldCheck,
     AVAILABILITY_CHECKED: History,
-    WORKFLOW_TRIGGERED: Zap
+    WORKFLOW_TRIGGERED: Zap,
+    FINDING_STATUS_UPDATED: ShieldCheck,
+    PACKET_GENERATED: FileText,
+    CONTRACT_EXTRACTED: FileText,
+    PARAMETER_UPDATED: ShieldCheck,
+    FINDING_CREATED: AlertCircle,
+    OVERRIDE_RECORDED: ShieldCheck,
+    WEBHOOK_TRIGGERED: Zap,
+    REMINDER_SCHEDULED: Clock,
+    SAP_STATUS_UPDATED: ExternalLink,
   }
   
   const Icon = iconMap[log.event_type] || FileText
@@ -79,7 +89,7 @@ function AuditItem({ log }: { log: any }) {
               {log.event_type.replace(/_/g, ' ')}
               {log.actor && (
                 <span className="px-2 py-0.5 rounded bg-white/5 text-[9px] text-slate-400 font-black uppercase tracking-widest">
-                  by {log.actor}
+                  by {log.actor} {log.role ? `(${log.role})` : ''}
                 </span>
               )}
             </h3>

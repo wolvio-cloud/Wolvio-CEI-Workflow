@@ -10,6 +10,8 @@ import {
   CheckCircle2
 } from 'lucide-react'
 import { formatINR } from '@/lib/utils'
+import { InvoiceService } from '@/lib/services/invoice-service'
+import { InvoiceActions } from '@/components/InvoiceActions'
 
 async function getContractAndEvidence(id: string) {
   const contract = (await sql`SELECT * FROM contracts WHERE id = ${id}`)[0]
@@ -22,6 +24,15 @@ async function getContractAndEvidence(id: string) {
 
 export default async function InvoiceGeneratePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
+  
+  // Deterministic generation for Apr 2025
+  const invoice = await InvoiceService.generateInvoiceDraft({
+    contractId: id,
+    periodStart: '2025-04-01',
+    periodEnd: '2025-04-30',
+    jmrKwh: 33360000
+  })
+
   const { contract, evidence } = await getContractAndEvidence(id)
   if (!contract) return <div>Contract not found</div>
 
@@ -58,45 +69,43 @@ export default async function InvoiceGeneratePage({ params }: { params: Promise<
                 <LineItem 
                   title="Base Monthly Fee (Escalated)" 
                   formula={`₹1.20Cr × (163.4 ÷ 158.8)`}
-                  amount={12347607}
+                  amount={invoice.base_amount}
                   clause="Clause 5.2"
                 />
                 <LineItem 
                   title="Variable Generation Charge" 
                   formula={`${evidence.data.net_kwh.toLocaleString()} kWh × ₹0.042`}
-                  amount={1401120}
+                  amount={invoice.variable_amount}
                   clause="Clause 6.1"
                 />
                 
                 <div className="pt-6 border-t border-white/10 flex justify-between items-center">
                   <span className="text-slate-400 font-medium">Subtotal</span>
-                  <span className="text-2xl font-bold text-white">{formatINR(13748727)}</span>
+                  <span className="text-2xl font-bold text-white">{formatINR(invoice.base_amount + invoice.variable_amount)}</span>
                 </div>
 
                 <LineItem 
                   title="Goods and Services Tax (IGST)" 
                   formula="18% on Taxable Value"
-                  amount={2474771}
+                  amount={invoice.tax_amount}
                   clause="Clause 6.2"
                 />
 
                 <div className="p-6 rounded-2xl bg-orange-600/10 border border-orange-500/20 flex justify-between items-center">
                   <div>
                     <p className="text-xs font-black text-orange-500 uppercase tracking-widest">Total Invoice Amount</p>
-                    <p className="text-4xl font-black text-white">{formatINR(16223498)}</p>
+                    <p className="text-4xl font-black text-white">{formatINR(invoice.total_amount)}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-xs text-slate-400 uppercase font-bold">Due Date</p>
-                    <p className="text-lg font-bold text-white">Jun 14, 2025</p>
+                    <p className="text-lg font-bold text-white">{new Date(invoice.due_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="flex gap-4">
-              <button className="flex-1 py-4 rounded-2xl bg-orange-600 hover:bg-orange-700 text-white font-black text-lg transition-all shadow-2xl shadow-orange-900/40">
-                APPROVE & POST TO SAP
-              </button>
+            <div className="flex flex-col gap-4">
+              <InvoiceActions invoiceId={invoice.id} />
               <button className="flex-1 py-4 rounded-2xl bg-white/5 hover:bg-white/10 text-white font-bold text-lg border border-white/10 transition-all">
                 REQUEST REVISION
               </button>

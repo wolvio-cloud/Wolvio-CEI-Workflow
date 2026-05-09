@@ -18,9 +18,8 @@ if (existsSync(envPath)) {
   }
 }
 
-const sql = neon(process.env.DATABASE_URL!)
-
-async function seed() {
+export async function seed() {
+  const sql = neon(process.env.DATABASE_URL!)
   console.log('🌱 Seeding Wolvio CEI Demo Data...')
 
   // 1. Contract
@@ -273,4 +272,7 @@ async function seed() {
   console.log('✅ Seeding complete.')
 }
 
-seed().catch(console.error)
+// If running directly
+if (require.main === module) {
+  seed().catch(console.error)
+}

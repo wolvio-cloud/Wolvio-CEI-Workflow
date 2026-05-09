@@ -7,6 +7,8 @@ export async function POST(
   const { id } = await params
   const invoiceId = id
 
+  const { actor, role } = await request.json()
+
   try {
     const invoice = (await sql`
       SELECT i.*, c.customer_name, c.contract_id as external_contract_id 
@@ -23,13 +25,13 @@ export async function POST(
     // 2. Create Approval record
     await sql`
       INSERT INTO approvals (invoice_id, actor, role, action, comments)
-      VALUES (${invoiceId}, 'Madhan (FC)', 'Finance Controller', 'APPROVE', 'Approved for SAP posting')
+      VALUES (${invoiceId}, ${actor || 'System User'}, ${role || 'Finance Controller'}, 'APPROVE', 'Approved for SAP posting')
     `
 
     // 3. Audit Log
     await sql`
-      INSERT INTO audit_log (event_type, contract_id, invoice_id, actor, action)
-      VALUES ('INVOICE_APPROVED', ${invoice.contract_id}, ${invoiceId}, 'Madhan (FC)', 'Manually approved invoice draft')
+      INSERT INTO audit_log (event_type, contract_id, invoice_id, actor, role, action)
+      VALUES ('INVOICE_APPROVED', ${invoice.contract_id}, ${invoiceId}, ${actor || 'System User'}, ${role || 'Finance Controller'}, 'Manually approved invoice draft')
     `
 
     // 4. Trigger n8n Webhook
@@ -57,6 +59,15 @@ export async function POST(
         console.warn('n8n webhook failed, but continuing', err)
       }
     }
+
+    // 5. Schedule Internal Reminder
+    const triggerDate = new Date()
+    triggerDate.setDate(triggerDate.getDate() + 7) // Reminder in 7 days if not posted
+    
+    await sql`
+      INSERT INTO reminders (invoice_id, trigger_date, reminder_type, status)
+      VALUES (${invoiceId}, ${triggerDate.toISOString().split('T')[0]}, 'FOLLOW_UP_POSTING', 'scheduled')
+    `
 
     return Response.json({ success: true, workflow_triggered })
 

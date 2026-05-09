@@ -13,6 +13,7 @@ import {
   ArrowLeftRight
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { DemoResetButton } from './DemoResetButton'
 
 const navItems = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -21,6 +22,8 @@ const navItems = [
   { name: 'Ops Availability', href: '/ops', icon: Activity },
   { name: 'Audit Trail', href: '/audit', icon: History },
 ]
+
+import { RoleSwitcher } from './RoleSwitcher'
 
 export function Sidebar() {
   const pathname = usePathname()
@@ -35,6 +38,8 @@ export function Sidebar() {
           WOLVIO <span className="text-orange-500">CEI</span>
         </span>
       </div>
+
+      <RoleSwitcher />
 
       <nav className="flex-1 px-4 py-4 space-y-2">
         {navItems.map((item) => {
@@ -61,6 +66,7 @@ export function Sidebar() {
             </Link>
           )
         })}
+        <DemoResetButton />
       </nav>
 
       <div className="p-4 mt-auto">
