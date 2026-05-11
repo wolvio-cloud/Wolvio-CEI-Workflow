@@ -15,7 +15,15 @@ export class ApprovalPacketService {
         doc.fontSize(20).font('Helvetica-Bold').text('Wolvio CEI — Approval Packet', { align: 'center' });
         doc.moveDown();
         doc.fontSize(10).font('Helvetica').text(`Generated: ${new Date().toLocaleString()}`, { align: 'right' });
-        doc.moveDown(2);
+        doc.moveDown();
+
+        // Phase 1 Disclaimer
+        doc.fontSize(9).font('Helvetica-Oblique')
+          .fillColor('#CC4400')
+          .text('INTERNAL VALIDATION AND APPROVAL PACKET', { align: 'center' });
+        doc.text('This is not an official SAP invoice and does not represent ERP posting.', { align: 'center' });
+        doc.text('Final financial execution remains with the Finance team in SAP.', { align: 'center' });
+        doc.fillColor('black').moveDown(2);
 
         // 1. Contract Info
         doc.fontSize(14).font('Helvetica-Bold').text('1. Contract Summary');
@@ -42,14 +50,14 @@ export class ApprovalPacketService {
         doc.fontSize(12).font('Helvetica-Bold').text(`Total Invoice: ${formatINR(data.invoice.total_amount)}`);
         doc.moveDown();
 
-        // 3. Confidence & Variance
-        doc.fontSize(14).font('Helvetica-Bold').text('3. Confidence & Variance Report');
+        // 3. Variance Explanation
+        doc.fontSize(14).font('Helvetica-Bold').text('3. Variance Explanation (Plain-English)');
         doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
         doc.moveDown(0.5);
         doc.fontSize(10).font('Helvetica');
-        doc.text(`Status: ${data.invoice.status.toUpperCase()}`);
+        doc.text(`Approval Status: ${data.invoice.status.toUpperCase()}`);
         doc.moveDown(0.5);
-        doc.text(`Audit Narrative:`, { font: 'Helvetica-Bold' });
+        doc.text('Explanation generated from deterministic calculation results:');
         doc.text(data.invoice.confidence_explanation, { align: 'justify' });
         doc.moveDown();
 
@@ -79,8 +87,8 @@ export class ApprovalPacketService {
 
         // Footer
         doc.moveDown(4);
-        doc.fontSize(8).font('Helvetica-Oblique').text('SAP-entry-ready draft. Not an official SAP invoice.', { align: 'center' });
-        doc.text('Verified by Wolvio CEI Math Engine.', { align: 'center' });
+        doc.fontSize(8).font('Helvetica-Oblique').text('SAP-entry-ready validation packet. Not an official SAP invoice and does not represent ERP posting.', { align: 'center' });
+        doc.text('Calculations verified by Wolvio CEI deterministic math engine. AI used only for variance explanation text.', { align: 'center' });
 
         doc.end();
       } catch (err) {

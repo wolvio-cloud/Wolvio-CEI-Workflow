@@ -55,12 +55,15 @@ app.get('/sap/opu/odata/v4/API_BILLING_DOCUMENT_SRV/A_BillingDocument', (req, re
   })
 })
 
+// DEMO SIMULATION — This mock simulates the SAP OData response format for demonstration purposes.
+// Wolvio CEI Phase 1 does not write to live SAP. Posting is performed manually by the Finance team.
 app.post('/sap/opu/odata/v4/API_BILLING_DOCUMENT_SRV/A_BillingDocument', (req, res) => {
   res.status(201).json({
     "@odata.context": "$metadata#A_BillingDocument/$entity",
     "BillingDocument": "90005678",
-    "Status": "Posted",
-    "Message": "Invoice successfully posted to SAP S/4HANA Finance"
+    "Status": "SimulatedPosted",
+    "Message": "[DEMO SIMULATION] SAP-entry-ready approval packet prepared. Manual posting by Finance team required.",
+    "Phase1Note": "CEI does not post to live SAP in Phase 1."
   })
 })
 

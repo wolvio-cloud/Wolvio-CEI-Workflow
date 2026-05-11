@@ -136,7 +136,7 @@ export default async function InvoiceGeneratePage({ params }: { params: Promise<
                 <span className="text-xs font-black uppercase tracking-widest">Traceability Note</span>
               </div>
               <p className="text-xs text-slate-400 leading-relaxed">
-                Every calculation is derived using pure TypeScript functions. No AI was involved in the financial math. Claude API was used only for natural language explanation generation.
+                All financial calculations use a deterministic TypeScript engine — not AI. The AI (Claude) is used only to generate plain-English variance explanations from the calculation results.
               </p>
             </div>
           </aside>

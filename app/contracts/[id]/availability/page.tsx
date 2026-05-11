@@ -62,7 +62,7 @@ export default function AvailabilityPage({ params: paramsPromise }: { params: Pr
           <div className="px-6 py-4 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center gap-4">
             <AlertTriangle className="text-red-500 w-6 h-6" />
             <div>
-              <p className="text-[10px] text-red-500 font-black uppercase tracking-widest">Vayona Exposure</p>
+              <p className="text-[10px] text-red-500 font-black uppercase tracking-widest">LD Exposure</p>
               <p className="text-2xl font-black text-white tracking-tighter">{formatINR(evidence.finalLd)}</p>
             </div>
           </div>
@@ -72,7 +72,7 @@ export default function AvailabilityPage({ params: paramsPromise }: { params: Pr
         <div className="grid grid-cols-4 gap-6">
           <KPICard label="Raw Availability" value="91.9%" sub="SCADA Baseline" />
           <KPICard label="SLDC Exclusions" value="87.4 hrs" sub="Verified Cert" color="orange" />
-          <KPICard label="Contractual Availability" value="92.5%" sub="Vayona Threshold: 96%" highlight />
+          <KPICard label="Contractual Availability" value="92.5%" sub="After exclusions ↓ 96% guarantee" highlight />
           <KPICard label="Audit Status" value="LD FOUND" sub="Clause 7.1 Violation" color="red" />
         </div>
 
@@ -115,7 +115,7 @@ export default function AvailabilityPage({ params: paramsPromise }: { params: Pr
                 <p className="text-sm text-white/80 font-medium italic">Shortfall against 96% guarantee</p>
               </div>
               <button className="w-full py-4 bg-white text-orange-700 font-black text-xs uppercase tracking-widest rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all">
-                Issue LD Recovery Notice
+                Prepare LD Approval Packet
               </button>
             </div>
 

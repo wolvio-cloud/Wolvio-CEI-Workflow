@@ -1,49 +1,90 @@
-# Wolvio: Contract Execution Intelligence Platform (PoC)
+# Wolvio CEI — Contract Execution Intelligence
 
-## Executive Summary
-Wolvio is an enterprise-grade AI platform designed specifically for the Renewable Energy sector. It automates the extraction, auditing, and validation of highly complex Long-Term Service Agreements (LTSA) to prevent revenue leakage.
+## Product Status
+
+Wolvio CEI (Contract Execution Intelligence) is a Phase 1 working model designed as a precision control layer for renewable energy O&M contract execution.
+
+It connects contract clauses, operational evidence, SAP billing data, approval decisions, and audit records into one controlled workflow. The goal is to reduce manual invoice validation, improve LD visibility, and produce SAP-entry-ready approval packets without writing back to SAP in Phase 1.
+
+**Core principle:** AI reads. Math validates. Humans approve. Workflow executes inside CEI. Audit log records every decision. SAP remains the system of record.
 
 ---
 
-## 🚀 DEMO RUNBOOK (T-ZERO ZERO-FAIL CHECKLIST)
+## 🚀 DEMO RUNBOOK
 
-### 1. Environment Readiness (T-24h)
-Ensure the following environment variables are strictly set in your `.env.local` file:
-\`\`\`env
-# Core AI Extraction Engine
-ANTHROPIC_API_KEY=sk-ant-api03-... # Must be active and funded
+### 1. Environment Readiness
 
-# Optional: Supabase Connection (if using real DB instead of Mock DB)
-NEXT_PUBLIC_SUPABASE_URL=...
-NEXT_PUBLIC_SUPABASE_ANON_KEY=...
-\`\`\`
+Ensure the following environment variables are set in your `.env.local` file:
 
-### 2. Cache Warmup & Cinematic Flow (T-1h)
-The PoC is designed with a "Cinematic Extraction" flow to keep the client engaged while the AI processes complex documents.
-1. Start the server: `taskkill /F /IM node.exe /T` (to clear locks) -> `npm run dev`
-2. Open `http://localhost:3000/welcome`
-3. Click through the login (any credentials work).
-4. **Important**: Go to the Dashboard and click on the **ReNew Power Mega-LTSA (C002)** contract to ensure the Next.js cache has compiled the page.
-5. In the contract detail view, expand the "Predictive Financial Modeling" section at the bottom.
-6. Click "Validate New Invoice" and upload the provided `demo_data/invoices/INV-002.pdf` (or any dummy PDF, the engine will use the seeded INV-002 logic for the demo).
+```env
+# AI Extraction Engine (used for variance explanation generation only)
+ANTHROPIC_API_KEY=sk-ant-api03-...
 
-### 3. Demo Pilot Controls (Fallback Mode)
-If the live AI extraction fails due to hotel Wi-Fi or API timeouts, press **`Ctrl+Shift+D` (Windows) or `Cmd+Shift+D` (Mac)** to open the **Demo Pilot Panel**.
-- **Restart Experience**: Quickly drops you back to the welcome screen.
-- **Confidential Mode**: Toggles UI blurring for sensitive client screens.
-- **Pre-cached Path**: The `INV-002` validation results are deterministic and will always render perfectly, even if the Anthropic API is slow.
+# Neon Postgres Database
+DATABASE_URL=postgresql://...
+
+# Optional: n8n Webhook for approval notifications
+N8N_WEBHOOK_URL_INVOICE_APPROVED=...
+N8N_WEBHOOK_URL_FINDING_APPROVED=...
+```
+
+### 2. Start the Server
+
+```bash
+npm run dev
+```
+
+Open `http://localhost:3000/dashboard`
+
+### 3. Demo Flow
+
+Navigate the following path for the full end-to-end demonstration:
+
+**Dashboard → Contract Digital Twin → Invoice Draft Builder → Invoice Confidence Report → Approval Hub → Availability / LD Review → Approval Packet → Audit Trail**
+
+### 4. Demo Pilot Controls
+
+Use the **Demo Control Panel** (bottom-right overlay) to:
+- Switch active persona (Finance Controller, Ops Manager, Legal, IT Observer, CEI Admin)
+- Reset demo data to Day 1 state (CEI Admin only)
+
+### 5. Locked Demo Numbers
+
+These values are deterministic and must not change:
+
+| Line Item | Value |
+| :--- | :--- |
+| Base Fee (Escalated) | ₹1,23,47,607 |
+| WPI Escalation Amount | ₹3,47,607 |
+| Variable Generation Charge | ₹14,01,120 |
+| Total Invoice (incl. GST) | ₹1,62,23,498 |
+| Unexplained Variance | ₹0 |
+| Contractual Availability | 92.5% |
+| LD Exposure | ₹25,20,000 |
 
 ---
 
 ## Technical Architecture
-* **Frontend:** Next.js 16 (Turbopack), TailwindCSS, Radix UI.
-* **Validation Engine:** Deterministic rule-engine (`lib/validation/engine.ts`) with 100% precision.
-* **AI Extraction:** Claude 3.5 Sonnet with exponential backoff for resilience.
+
+- **Framework:** Next.js 16 (App Router), React 19, Tailwind CSS 4
+- **Database:** Neon Serverless Postgres
+- **Math Engine:** Deterministic TypeScript engine — zero AI involvement in financial calculations
+- **AI Usage:** Claude API used only for plain-English variance explanation generation
+- **PDF Generation:** PDFKit for SAP-entry-ready approval packets
+- **Role-Based Access:** Demo-grade RBAC with 6 personas
+
+## Phase 1 Boundary
+
+- CEI does **not** post invoices into live SAP
+- CEI does **not** modify SAP, SCADA, SharePoint, or contract repository data
+- CEI does **not** send external customer communications automatically
+- CEI prepares SAP-entry-ready approval packets for the client's Finance team to post manually
+- Final financial execution remains with the client's Finance team in SAP
 
 ## Test Harness
-To verify the deterministic engine is working flawlessly for the golden scenario (INV-002):
-\`\`\`bash
-npm install -D vitest
-npx vitest run
-\`\`\`
-This ensures the Base Fee match, WPI gap, Variable under-billing, and Bonus opportunity are mathematically verified before you step into the room.
+
+```bash
+node scripts/preflight.js
+```
+
+This validates the deterministic engine, database state, and locked demo numbers before any demonstration.

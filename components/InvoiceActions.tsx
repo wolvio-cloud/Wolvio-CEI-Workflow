@@ -43,7 +43,7 @@ export function InvoiceActions({ invoiceId }: { invoiceId: string }) {
   if (status === 'loading') {
     return (
       <div className="w-full py-4 rounded-xl bg-white/10 text-white font-black text-lg flex items-center justify-center gap-2">
-        <Loader2 className="w-6 h-6 animate-spin" /> Posting to SAP...
+        <Loader2 className="w-6 h-6 animate-spin" /> Preparing approval packet...
       </div>
     )
   }
@@ -51,7 +51,7 @@ export function InvoiceActions({ invoiceId }: { invoiceId: string }) {
   if (status === 'success') {
     return (
       <div className="w-full py-4 rounded-xl bg-green-500 text-white font-black text-lg flex items-center justify-center gap-2">
-        <CheckCircle2 className="w-6 h-6" /> Successfully Posted
+        <CheckCircle2 className="w-6 h-6" /> Approved — Ready for Finance Review
       </div>
     )
   }
@@ -66,11 +66,11 @@ export function InvoiceActions({ invoiceId }: { invoiceId: string }) {
         }`}
       >
         {status === 'error' && <AlertCircle className="w-5 h-5 text-red-500" />}
-        Post to SAP S/4HANA
+        Approve Invoice Draft
       </button>
       {!canApprove && (
         <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest text-center">
-          Posting restricted to Finance roles
+          Approval restricted to Finance Controller, Finance Head, or CEI Admin
         </p>
       )}
     </div>

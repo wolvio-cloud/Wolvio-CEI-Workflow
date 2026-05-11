@@ -80,7 +80,7 @@ export default async function ConfidenceReportPage({ params }: { params: Promise
           <div className="p-8 rounded-3xl bg-orange-600 border border-orange-500/20 space-y-6 shadow-2xl shadow-orange-900/40">
             <h3 className="text-lg font-bold text-white">Action Required</h3>
             <p className="text-sm text-orange-100/80 leading-relaxed">
-              This invoice is verified against the digital twin of the contract. You can proceed with SAP posting.
+              This invoice draft has been validated against the Contract Digital Twin. Approve below to generate a SAP-entry-ready approval packet.
             </p>
             <InvoiceActions invoiceId={invoice.id} />
             <a 
@@ -130,7 +130,7 @@ export default async function ConfidenceReportPage({ params }: { params: Promise
                     <td className="px-6 py-5 text-white font-bold">{formatINR(m.total)}</td>
                     <td className="px-6 py-5">
                       <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter ${
-                        m.status === 'paid' ? 'bg-green-500/10 text-green-500' : 'bg-orange-500/10 text-orange-500'
+                        m.status === 'posted' ? 'bg-green-500/10 text-green-500' : 'bg-orange-500/10 text-orange-500'
                       }`}>
                         {m.status}
                       </span>
