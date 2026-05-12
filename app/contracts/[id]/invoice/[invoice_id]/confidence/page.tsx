@@ -90,7 +90,12 @@ export default async function ConfidenceReportPage({ params }: { params: Promise
             >
               Download Approval Packet
             </a>
-            <PostingStatus invoiceId={invoice.id} currentStatus={invoice.status} />
+            <PostingStatus 
+              invoiceId={invoice.id} 
+              currentStatus={invoice.status} 
+              sapReference={invoice.sap_reference_number}
+              comment={invoice.posting_comment}
+            />
           </div>
         </div>
 

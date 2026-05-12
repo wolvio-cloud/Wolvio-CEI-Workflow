@@ -2,90 +2,45 @@ import { Sidebar } from '@/components/Sidebar'
 import sql from '@/lib/db'
 import { 
   ShieldCheck, 
-  FileText, 
-  AlertTriangle, 
-  TrendingDown,
   ArrowUpRight,
   MapPin,
   Clock
 } from 'lucide-react'
 import Link from 'next/link'
-import { formatINR } from '@/lib/utils'
 import { UploadContractButton } from '@/components/UploadContractButton'
+import { DashboardContent } from '@/components/DashboardContent'
 
 async function getDashboardData() {
   const contracts = await sql`
     SELECT c.*, 
       (SELECT COUNT(*) FROM invoices WHERE contract_id = c.id AND status = 'draft') as drafts_ready,
-      (SELECT COUNT(*) FROM findings WHERE contract_id = c.id AND status = 'pending') as findings_pending
+      (SELECT COUNT(*) FROM findings WHERE contract_id = c.id AND status = 'open') as findings_pending
     FROM contracts c
     ORDER BY created_at DESC
   `
-
-  const metrics = {
-    contractsMonitored: contracts.length,
-    invoiceDraftsReady: contracts.reduce((s: number, c: any) => s + parseInt(c.drafts_ready), 0),
-    findingsPending: contracts.reduce((s: number, c: any) => s + parseInt(c.findings_pending), 0),
-    ldExposure: (await sql`SELECT SUM(gap_amount) FROM findings WHERE status = 'pending'`)[0].sum || 0
-  }
-
-  return { contracts, metrics }
+  return { contracts }
 }
 
 export default async function DashboardPage() {
-  const { contracts, metrics } = await getDashboardData()
+  const { contracts } = await getDashboardData()
 
   return (
     <div className="flex min-h-screen bg-[#061529]">
       <Sidebar />
       
       <main className="flex-1 p-10 space-y-10">
-        <header className="flex justify-between items-end">
-          <div>
-            <h1 className="text-4xl font-bold tracking-tight text-white mb-2">Portfolio Overview</h1>
-            <p className="text-slate-400">Monitoring {metrics.contractsMonitored} high-value LTSA agreements</p>
-          </div>
-          <div className="flex gap-4">
-            <UploadContractButton />
-          </div>
-        </header>
-
-        {/* METRICS GRID */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <MetricCard 
-            title="Contracts Monitored" 
-            value={metrics.contractsMonitored} 
-            icon={ShieldCheck} 
-            color="blue"
-          />
-          <MetricCard 
-            title="Invoice Drafts Ready" 
-            value={metrics.invoiceDraftsReady} 
-            icon={FileText} 
-            color="green"
-            badge="April 2025"
-          />
-          <MetricCard 
-            title="Findings Pending" 
-            value={metrics.findingsPending} 
-            icon={AlertTriangle} 
-            color="amber"
-          />
-          <MetricCard 
-            title="LD Exposure" 
-            value={formatINR(metrics.ldExposure)} 
-            icon={TrendingDown} 
-            color="red"
-            trend="+12% from Mar"
-          />
-        </div>
+        {/* ROLE-AWARE DASHBOARD CONTENT */}
+        <DashboardContent />
 
         {/* CONTRACTS TABLE */}
         <section className="space-y-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-white">Active Agreements</h2>
+            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+              <ShieldCheck className="w-5 h-5 text-orange-500" />
+              Active O&M Agreements
+            </h2>
             <Link href="/contracts" className="text-orange-500 hover:text-orange-400 text-sm font-medium flex items-center gap-1 transition-colors">
-              View All <ArrowUpRight className="w-4 h-4" />
+              View Portfolio <ArrowUpRight className="w-4 h-4" />
             </Link>
           </div>
 

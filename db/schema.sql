@@ -1,20 +1,21 @@
 -- Wolvio Contract Execution Intelligence
 -- Scalable Production Database Schema
 
--- Enable UUID extension
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
 -- 1. CONTRACTS TABLE: Master records for agreements
 CREATE TABLE IF NOT EXISTS contracts (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     contract_id VARCHAR(100) UNIQUE NOT NULL, -- Commercial ID like 'WFA-LTSA-2019-001'
     customer_name VARCHAR(255) NOT NULL,
+    site_name VARCHAR(255),
+    asset_location VARCHAR(255),
     site_location VARCHAR(255),
+    contract_type VARCHAR(50),
     pdf_storage_path TEXT,
     
     -- Processing status
     extraction_status VARCHAR(20) DEFAULT 'pending', -- pending, processing, completed, failed
     confidence_score NUMERIC(5, 2),
+    extraction_quality_score NUMERIC(5, 2),
     
     -- Extracted Parameters (Full JSON Snapshot)
     parameters JSONB DEFAULT '{}'::jsonb,
@@ -25,7 +26,7 @@ CREATE TABLE IF NOT EXISTS contracts (
 
 -- 2. INVOICES TABLE: Billing documents (Drafts or External)
 CREATE TABLE IF NOT EXISTS invoices (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     invoice_id VARCHAR(100) UNIQUE NOT NULL,
     contract_id UUID REFERENCES contracts(id) ON DELETE CASCADE,
     
@@ -49,19 +50,25 @@ CREATE TABLE IF NOT EXISTS invoices (
     calculation_evidence JSONB DEFAULT '{}'::jsonb,
     confidence_explanation TEXT,
     
+    -- SAP Posting Metadata
+    sap_reference_number VARCHAR(100),
+    posting_comment TEXT,
+    
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 3. FINDINGS TABLE: Individual validation issues or availability alerts
 CREATE TABLE IF NOT EXISTS findings (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     contract_id UUID REFERENCES contracts(id) ON DELETE CASCADE,
     invoice_id UUID REFERENCES invoices(id) ON DELETE SET NULL,
     
     check_id VARCHAR(50) NOT NULL, -- e.g., 'WPI_ESCALATION', 'AVAILABILITY_LD'
     verdict VARCHAR(50) NOT NULL, -- CLEAN, GAP, OPPORTUNITY, LD_EXPOSURE
+    severity VARCHAR(20) DEFAULT 'medium', -- low, medium, high, critical
     
+    financial_impact NUMERIC(15, 2) DEFAULT 0,
     expected_amount NUMERIC(15, 2) DEFAULT 0,
     actual_amount NUMERIC(15, 2) DEFAULT 0,
     gap_amount NUMERIC(15, 2) DEFAULT 0,
@@ -75,25 +82,30 @@ CREATE TABLE IF NOT EXISTS findings (
     plain_english_it TEXT, -- Narrative for IT/Ops
     recommended_action TEXT,
     
-    status VARCHAR(20) DEFAULT 'pending', -- pending, approved, dismissed
-    routed_to VARCHAR(50), -- FINANCE, OPERATIONS, IT
+    status VARCHAR(20) DEFAULT 'pending', -- pending, approved, dismissed, open
+    routed_to VARCHAR(50), -- FINANCE, OPERATIONS, IT, OPERATIONS_MANAGER
+    assigned_role JSONB DEFAULT '[]'::jsonb, -- Store roles as JSON array
+    
+    period_start DATE,
+    period_end DATE,
     
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 4. WPI_INDEX: Historical inflation data for escalations
 CREATE TABLE IF NOT EXISTS wpi_index (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    year INTEGER UNIQUE NOT NULL,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    year INTEGER NOT NULL,
+    month VARCHAR(20) NOT NULL,
     value NUMERIC(10, 4) NOT NULL,
-    month VARCHAR(20) DEFAULT 'January',
     source VARCHAR(100) DEFAULT 'Office of Economic Adviser',
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(year, month)
 );
 
 -- 5. AUDIT_LOG: Immutable record of every system and human action
 CREATE TABLE IF NOT EXISTS audit_log (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     event_type VARCHAR(50) NOT NULL, -- e.g., 'INVOICE_GENERATED', 'FINDING_APPROVED'
     contract_id UUID REFERENCES contracts(id),
     invoice_id UUID REFERENCES invoices(id),
@@ -101,6 +113,7 @@ CREATE TABLE IF NOT EXISTS audit_log (
     workflow_run_id UUID, -- For external workflow mapping
     
     actor VARCHAR(100) NOT NULL, -- SYSTEM, user_email, etc.
+    role VARCHAR(50), -- Added role for RBAC audit
     action TEXT NOT NULL,
     
     old_value JSONB,
@@ -115,7 +128,7 @@ CREATE TABLE IF NOT EXISTS audit_log (
 
 -- 6. APPROVALS TABLE: Human-in-the-loop decisions
 CREATE TABLE IF NOT EXISTS approvals (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     invoice_id UUID REFERENCES invoices(id),
     finding_id UUID REFERENCES findings(id),
     
@@ -124,6 +137,17 @@ CREATE TABLE IF NOT EXISTS approvals (
     action VARCHAR(20) NOT NULL, -- APPROVE, REJECT
     comments TEXT,
     
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 7. REMINDERS TABLE
+CREATE TABLE IF NOT EXISTS reminders (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    contract_id UUID REFERENCES contracts(id) ON DELETE CASCADE,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    due_date DATE NOT NULL,
+    status VARCHAR(20) DEFAULT 'pending', -- pending, dismissed, completed
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 

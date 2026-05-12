@@ -107,13 +107,61 @@ export class InvoiceService {
       RETURNING *
     `
 
+    // 7. Automated Exception Creation
+    const findings: any[] = []
+
+    // Finding 1: Unexplained Variance
+    if (varianceReport && varianceReport.unexplainedVariance > 10) {
+      findings.push(await FindingService.createFinding({
+        contractId: params.contractId,
+        invoiceId: invoiceId,
+        type: 'INVOICE_VARIANCE',
+        verdict: 'GAP',
+        severity: 'medium',
+        impact: varianceReport.unexplainedVariance,
+        expected: lastInvRow.total + varianceReport.totalDifference - varianceReport.unexplainedVariance,
+        actual: invResult.total,
+        recommendation: 'Review manual adjustments in line items for April 2025.',
+        periodStart: params.periodStart,
+        periodEnd: params.periodEnd
+      }))
+    }
+
+    // Finding 2: High Variance Threshold
+    if (varianceReport && Math.abs(varianceReport.totalDifference) > CLIENT_ASSUMPTIONS.thresholds.highVarianceAmount) {
+      findings.push(await FindingService.createFinding({
+        contractId: params.contractId,
+        invoiceId: invoiceId,
+        type: 'HIGH_VARIANCE',
+        verdict: 'GAP',
+        severity: 'high',
+        impact: varianceReport.totalDifference,
+        recommendation: 'Escalated review required due to high year-on-year fluctuation.',
+        periodStart: params.periodStart,
+        periodEnd: params.periodEnd
+      }))
+    }
+
+    // Finding 3: Low Confidence extraction (Simulated based on score if available)
+    if (contract.confidence_score < CLIENT_ASSUMPTIONS.thresholds.lowConfidenceScore) {
+      findings.push(await FindingService.createFinding({
+        contractId: params.contractId,
+        type: 'LOW_CONFIDENCE_CLAUSE',
+        verdict: 'GAP',
+        severity: 'low',
+        recommendation: 'Verify extracted base fee and escalation formula against PDF page 12.',
+        periodStart: params.periodStart,
+        periodEnd: params.periodEnd
+      }))
+    }
+
     // 7. Audit Logging
     await sql`
       INSERT INTO audit_log (event_type, contract_id, invoice_id, actor, action)
       VALUES ('INVOICE_GENERATED', ${params.contractId}, ${invoice.id}, 'SYSTEM', 'Generated draft invoice via Math Engine')
     `
 
-    return invoice
+    return { ...invoice, findings }
   }
 
   static async getInvoiceDetails(id: string) {

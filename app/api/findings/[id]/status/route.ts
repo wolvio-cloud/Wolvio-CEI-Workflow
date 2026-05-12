@@ -1,4 +1,6 @@
 import sql from '@/lib/db'
+import { FindingService } from '@/lib/services/finding-service'
+import { ReminderService } from '@/lib/services/reminder-service'
 
 export async function POST(
   request: Request,
@@ -8,25 +10,9 @@ export async function POST(
   const { status, comments, actor, role } = await request.json()
 
   try {
-    const finding = (await sql`SELECT * FROM findings WHERE id = ${id}`)[0]
-    if (!finding) return Response.json({ error: 'Finding not found' }, { status: 404 })
+    const updatedFinding = await FindingService.updateFindingStatus(id, status, actor, role, comments)
 
-    // 1. Update status
-    await sql`UPDATE findings SET status = ${status.toLowerCase()} WHERE id = ${id}`
-
-    // 2. Create Approval record
-    await sql`
-      INSERT INTO approvals (finding_id, actor, role, action, comments)
-      VALUES (${id}, ${actor || 'System User'}, ${role || 'Finance Controller'}, ${status}, ${comments || ''})
-    `
-
-    // 3. Audit Log
-    await sql`
-      INSERT INTO audit_log (event_type, contract_id, finding_id, actor, role, action)
-      VALUES ('FINDING_STATUS_UPDATED', ${finding.contract_id}, ${id}, ${actor || 'System User'}, ${role || 'Finance Controller'}, ${`Changed status to ${status}: ${comments || 'No comment'}`})
-    `
-
-    // 4. Trigger Webhook if Approved
+    // Trigger Webhook if Approved
     if (status === 'APPROVE') {
       const n8nUrl = process.env.N8N_WEBHOOK_URL_FINDING_APPROVED
       if (n8nUrl) {
@@ -36,10 +22,10 @@ export async function POST(
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               event: 'FINDING_APPROVED',
-              contract_id: finding.contract_id,
+              contract_id: updatedFinding.contract_id,
               finding_id: id,
-              verdict: finding.verdict,
-              gap_amount: finding.gap_amount,
+              verdict: updatedFinding.verdict,
+              gap_amount: updatedFinding.gap_amount,
               actor: actor || 'Madhan (FC)'
             })
           })
@@ -47,6 +33,13 @@ export async function POST(
           console.warn('n8n webhook failed', err)
         }
       }
+    }
+
+    // Update reminders
+    if (status === 'APPROVE' || status === 'REJECT') {
+      await sql`UPDATE reminders SET status = 'completed', completed_at = CURRENT_TIMESTAMP WHERE finding_id = ${id}`
+    } else {
+      await ReminderService.scheduleWorkflowReminders('FINDING', id, status)
     }
 
     return Response.json({ success: true })
