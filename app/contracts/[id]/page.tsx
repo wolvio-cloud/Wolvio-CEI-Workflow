@@ -15,13 +15,22 @@ import { formatINR } from '@/lib/utils'
 import { ParameterOverrideActions } from '@/components/ParameterOverrideActions'
 import { GenerateInvoiceButton } from '@/components/GenerateInvoiceButton'
 
-async function getContractData(id: string) {
-  const contract = (await sql`SELECT * FROM contracts WHERE id = ${id}`)[0]
+async function getContractData(idOrSlug: string) {
+  // Support both UUID and Contract ID (Slug) for demo robustness
+  const isUuid = idOrSlug.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)
+  
+  let contract;
+  if (isUuid) {
+    contract = (await sql`SELECT * FROM contracts WHERE id = ${idOrSlug}`)[0]
+  } else {
+    contract = (await sql`SELECT * FROM contracts WHERE contract_id = ${idOrSlug}`)[0]
+  }
+  
   if (!contract) return null
 
   const parameters = await sql`
     SELECT * FROM contract_parameters 
-    WHERE contract_id = ${id}
+    WHERE contract_id = ${contract.id}
   `
 
   return { contract, parameters }

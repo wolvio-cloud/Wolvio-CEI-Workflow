@@ -9,7 +9,8 @@ import {
   TrendingDown,
   Bell,
   ArrowRight,
-  ClipboardList
+  ClipboardList,
+  RefreshCcw
 } from 'lucide-react'
 import { formatINR } from '@/lib/utils'
 import Link from 'next/link'
@@ -18,6 +19,19 @@ export function DashboardContent() {
   const { activeUser } = useRole()
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [resetting, setResetting] = useState(false)
+
+  const handleReset = async () => {
+    setResetting(true)
+    try {
+      await fetch('/api/admin/reset-demo', { method: 'POST' })
+      window.location.reload()
+    } catch (err) {
+      alert('Reset failed')
+    } finally {
+      setResetting(false)
+    }
+  }
 
   useEffect(() => {
     async function fetchData() {
@@ -51,6 +65,14 @@ export function DashboardContent() {
           <h1 className="text-4xl font-bold tracking-tight text-white mb-2">Welcome, {activeUser.name}</h1>
           <p className="text-slate-400">Monitoring workflow for role: <span className="text-orange-500 font-semibold">{activeUser.roleLabel}</span></p>
         </div>
+        <button 
+          onClick={handleReset}
+          disabled={resetting}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-white transition-all text-xs font-bold"
+        >
+          <RefreshCcw className={`w-3 h-3 ${resetting ? 'animate-spin' : ''}`} />
+          {resetting ? 'Resetting...' : 'Refresh Demo Data'}
+        </button>
       </header>
 
       {/* METRICS GRID */}

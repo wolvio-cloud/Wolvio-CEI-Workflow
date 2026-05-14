@@ -17,10 +17,10 @@ import { DemoResetButton } from './DemoResetButton'
 
 const navItems = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Contracts', href: '/contracts', icon: ShieldCheck },
-  { name: 'Reconciliation', href: '/reconciliation', icon: ArrowLeftRight },
-  { name: 'Ops Availability', href: '/ops', icon: Activity },
-  { name: 'Audit Trail', href: '/audit', icon: History },
+  { name: 'Contracts', href: '/contracts/WFA-LTSA-2019-001', icon: ShieldCheck },
+  { name: 'Reconciliation', href: '/contracts/WFA-LTSA-2019-001/invoice', icon: ArrowLeftRight },
+  { name: 'Ops Availability', href: '/contracts/WFA-LTSA-2019-001/availability', icon: Activity },
+  { name: 'Audit Trail', href: '/contracts/WFA-LTSA-2019-001/audit', icon: History },
 ]
 
 import { RoleSwitcher } from './RoleSwitcher'

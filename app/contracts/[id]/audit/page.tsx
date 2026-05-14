@@ -1,131 +1,118 @@
 import { Sidebar } from '@/components/Sidebar'
 import sql from '@/lib/db'
 import { 
-  History, 
-  User, 
-  ShieldCheck, 
-  Calculator, 
-  Zap,
-  ArrowRight,
-  FileText,
-  Clock,
-  ExternalLink,
-  CheckCircle2,
-  CheckCircle,
-  AlertCircle
+  ArrowLeft,
+  History,
+  User,
+  Shield,
+  Activity,
+  Calendar
 } from 'lucide-react'
-import { formatINR } from '@/lib/utils'
+import Link from 'next/link'
 
-async function getAuditLog(contractId: string) {
-  return await sql`
+async function getAuditData(idOrSlug: string) {
+  const isUuid = idOrSlug.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)
+  
+  let contract;
+  if (isUuid) {
+    contract = (await sql`SELECT * FROM contracts WHERE id = ${idOrSlug}`)[0]
+  } else {
+    contract = (await sql`SELECT * FROM contracts WHERE contract_id = ${idOrSlug}`)[0]
+  }
+  
+  if (!contract) return null
+
+  const logs = await sql`
     SELECT * FROM audit_log 
-    WHERE contract_id = ${contractId} 
+    WHERE contract_id = ${contract.id}
     ORDER BY timestamp DESC
+    LIMIT 50
   `
+
+  return { contract, logs }
 }
 
-export default async function AuditTrailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function AuditPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const auditLog = await getAuditLog(id)
+  const data = await getAuditData(id)
+  if (!data) return <div>Contract not found</div>
+
+  const { contract, logs } = data
 
   return (
     <div className="flex min-h-screen bg-[#061529]">
       <Sidebar />
       
-      <main className="flex-1 p-10 space-y-10">
-        <header>
-          <div className="flex items-center gap-2 text-orange-500 font-bold uppercase tracking-widest text-xs mb-2">
-            <History className="w-4 h-4" /> Compliance Log
+      <main className="flex-1 p-10 space-y-8">
+        <header className="flex items-center gap-4">
+          <Link href={`/dashboard`} className="p-2 rounded-lg hover:bg-white/5 text-slate-400 transition-colors">
+            <ArrowLeft className="w-5 h-5" />
+          </Link>
+          <div>
+            <h1 className="text-3xl font-bold text-white">System Audit Trail</h1>
+            <p className="text-slate-400">{contract.site_name} · Immutable Compliance Record</p>
           </div>
-          <h1 className="text-4xl font-bold text-white tracking-tight">Audit Trail</h1>
-          <p className="text-slate-400">Chronological record of every system action and human decision</p>
         </header>
 
-        <div className="relative border-l border-white/10 ml-6 pl-10 space-y-12 py-4">
-          {auditLog.length === 0 ? (
-            <p className="text-slate-500 italic">No audit records found.</p>
+        <div className="space-y-4">
+          {logs.length === 0 ? (
+            <div className="p-20 text-center rounded-3xl bg-white/[0.02] border border-white/5 border-dashed">
+              <History className="w-12 h-12 text-slate-700 mx-auto mb-4" />
+              <p className="text-slate-500 font-medium tracking-widest uppercase text-xs">No audit logs found for this contract</p>
+            </div>
           ) : (
-            auditLog.map((log: any) => (
-              <AuditItem key={log.id} log={log} />
-            ))
+            <div className="bg-white/[0.03] border border-white/10 rounded-3xl overflow-hidden">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="border-b border-white/10 bg-white/[0.02]">
+                    <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Timestamp</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Actor / Role</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Action</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Evidence Reference</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {logs.map((log: any) => (
+                    <tr key={log.id} className="hover:bg-white/[0.02] transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2 text-xs text-slate-400">
+                          <Calendar className="w-3 h-3" />
+                          {new Date(log.timestamp).toLocaleString()}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-black text-white ${
+                            log.actor === 'SYSTEM' ? 'bg-orange-600' : 'bg-blue-600'
+                          }`}>
+                            {log.actor === 'SYSTEM' ? 'AI' : 'USR'}
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-white tracking-tight">{log.actor}</p>
+                            <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest tracking-tighter opacity-50">{log.role || 'System'}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <p className="text-sm text-slate-300 font-medium leading-relaxed">{log.action}</p>
+                      </td>
+                      <td className="px-6 py-4">
+                        {log.clause_reference ? (
+                          <span className="px-2 py-1 rounded bg-white/5 border border-white/10 text-[10px] font-bold text-orange-500 uppercase">
+                            {log.clause_reference}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">System Event</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       </main>
-    </div>
-  )
-}
-
-function AuditItem({ log }: { log: any }) {
-  const iconMap: any = {
-    INVOICE_GENERATED: Calculator,
-    INVOICE_APPROVED: CheckCircle2,
-    PARAMETER_OVERRIDE: ShieldCheck,
-    AVAILABILITY_CHECKED: History,
-    WORKFLOW_TRIGGERED: Zap,
-    FINDING_STATUS_UPDATED: ShieldCheck,
-    PACKET_GENERATED: FileText,
-    CONTRACT_EXTRACTED: FileText,
-    PARAMETER_UPDATED: ShieldCheck,
-    FINDING_CREATED: AlertCircle,
-    OVERRIDE_RECORDED: ShieldCheck,
-    WEBHOOK_TRIGGERED: Zap,
-    REMINDER_SCHEDULED: Clock,
-    SAP_STATUS_UPDATED: ExternalLink,
-  }
-  
-  const Icon = iconMap[log.event_type] || FileText
-
-  return (
-    <div className="relative group">
-      {/* Timeline Bullet */}
-      <div className="absolute -left-[54px] top-0 w-8 h-8 rounded-full bg-[#061529] border-2 border-white/10 flex items-center justify-center group-hover:border-orange-500 transition-colors z-10 shadow-xl shadow-black">
-        <Icon className="w-4 h-4 text-slate-400 group-hover:text-orange-500 transition-colors" />
-      </div>
-
-      <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 hover:bg-white/[0.05] transition-all space-y-4">
-        <div className="flex justify-between items-start">
-          <div className="space-y-1">
-            <h3 className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
-              {log.event_type.replace(/_/g, ' ')}
-              {log.actor && (
-                <span className="px-2 py-0.5 rounded bg-white/5 text-[9px] text-slate-400 font-black uppercase tracking-widest">
-                  by {log.actor} {log.role ? `(${log.role})` : ''}
-                </span>
-              )}
-            </h3>
-            <p className="text-sm text-slate-400">{log.action}</p>
-          </div>
-          <div className="text-right">
-            <div className="flex items-center gap-1.5 text-slate-500 text-xs font-mono">
-              <Clock className="w-3 h-3" />
-              {new Date(log.timestamp).toLocaleString('en-IN', {
-                day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
-              })}
-            </div>
-          </div>
-        </div>
-
-        {(log.clause_reference || log.formula) && (
-          <div className="p-4 rounded-xl bg-black/20 border border-white/5 grid grid-cols-2 gap-4">
-            {log.clause_reference && (
-              <div>
-                <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-1">Clause Reference</p>
-                <p className="text-xs text-orange-500 font-bold">{log.clause_reference}</p>
-              </div>
-            )}
-            {log.formula && (
-              <div>
-                <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-1">Logic Used</p>
-                <code className="text-[10px] text-slate-300 font-mono">{log.formula}</code>
-              </div>
-            )}
-          </div>
-        )}
-
-        <div className="flex items-center gap-2 text-[10px] text-slate-600 font-black uppercase tracking-widest group-hover:text-slate-400 transition-colors">
-          Audit Reference: {log.id.substring(0, 8)} <ExternalLink className="w-2.5 h-2.5" />
-        </div>
-      </div>
     </div>
   )
 }

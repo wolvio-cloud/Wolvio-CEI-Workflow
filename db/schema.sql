@@ -151,6 +151,31 @@ CREATE TABLE IF NOT EXISTS reminders (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 8. CONTRACT_PARAMETERS: Explicitly tracked terms for high-precision extraction
+CREATE TABLE IF NOT EXISTS contract_parameters (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    contract_id UUID REFERENCES contracts(id) ON DELETE CASCADE,
+    field_name VARCHAR(100) NOT NULL,
+    value JSONB NOT NULL,
+    confidence VARCHAR(20) DEFAULT 'medium', -- low, medium, high
+    clause_reference VARCHAR(100),
+    page_number INTEGER,
+    is_manual_override BOOLEAN DEFAULT false,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 9. EVIDENCE_FILES: Operational data snapshots
+CREATE TABLE IF NOT EXISTS evidence_files (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    contract_id UUID REFERENCES contracts(id) ON DELETE CASCADE,
+    file_type VARCHAR(20) NOT NULL, -- SCADA, JMR, WPI
+    period_start DATE NOT NULL,
+    period_end DATE NOT NULL,
+    storage_path TEXT,
+    data JSONB DEFAULT '{}'::jsonb, -- Store specific extracted metrics
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Indices for massive scale
 CREATE INDEX IF NOT EXISTS idx_contracts_cid ON contracts(contract_id);
 CREATE INDEX IF NOT EXISTS idx_invoices_contract ON invoices(contract_id);
@@ -161,3 +186,5 @@ CREATE INDEX IF NOT EXISTS idx_audit_contract ON audit_log(contract_id);
 CREATE INDEX IF NOT EXISTS idx_audit_event ON audit_log(event_type);
 CREATE INDEX IF NOT EXISTS idx_wpi_year ON wpi_index(year);
 CREATE INDEX IF NOT EXISTS idx_params_jsonb ON contracts USING GIN (parameters);
+CREATE INDEX IF NOT EXISTS idx_contract_params_cid ON contract_parameters(contract_id);
+CREATE INDEX IF NOT EXISTS idx_evidence_contract ON evidence_files(contract_id);
